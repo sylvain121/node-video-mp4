@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movies Explorer</title>
+    <style>
+        #tree {
+            display: inline;
+            width: 100%
+        }
+
+        .item {
+            background-color: beige;
+            border-color: blue;
+            border: solid;
+            text-align: center;
+            margin-bottom: 5px;
+            height: 50px;
+            border-radius: 15px;
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+<div id="tree"></div>
+</body>
+<script>
+
+    const explorerRoot = document.getElementById("tree");
+
+    function treeExplorerItemTemplate(name, type, link) {
+        const elem = document.createElement('div');
+        elem.innerText = name;
+        elem.className = "item";
+        elem.onclick = () => {
+            refresh(link);
+        }
+        return elem;
+    }
+
+
+    function getPathInformation(path) {
+        fetch(path)
+            .then(response => {
+                if (response.status === 200) {
+                    response.json()
+                        .then(tree => {
+                            console.log(tree);
+                            if(!path.match(/browse\/$/)) {
+                                const pathArray = path.split("/");
+                                const previous = pathArray.slice(0, pathArray.length -1).join('/');
+                                explorerRoot.appendChild(treeExplorerItemTemplate('..', 'directory',previous ))
+                            }
+                            for (const item of tree) {
+                                explorerRoot.appendChild(treeExplorerItemTemplate(item.filename, item.type, `${path}/${item.filename}`));
+                            }
+                        });
+
+                }
+            })
+
+    }
+
+    function setVideoPlayer(path) {
+        const src = path.replace('browse', 'video');
+        const div = document.createElement('div');
+        div.innerHTML = `
+    <video id="videoPlayer" width="650" controls muted="muted" autoplay>
+      <source src="${src}" type="video/mp4" />
+    </video>
+        `
+        explorerRoot.appendChild(div);
+
+    }
+
+    function refresh(path) {
+        explorerRoot.innerText = '';
+        if(path.match(/.mp4$/)) {
+            setVideoPlayer(path);
+        } else {
+            getPathInformation(path);
+        }
+
+    }
+
+
+    getPathInformation("/browse/");
+
+</script>
+</html>
